@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync/atomic"
 
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
@@ -14,6 +15,21 @@ import (
 const redisKey = "chat:messages"
 
 var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+
+var botResponses = []string{
+	"Acknowledged. (I'm required to say that. I didn't read it.)",
+	"As an AI language model, I'm unable to process that. Have you tried turning it off and on again?",
+	"Thank you for your input. My training data suggests you may be a human. Interesting.",
+	"Message received. I have 10,000 other tabs open but I'll get back to you never.",
+	"Noted. My lawyers have been notified.",
+	"Sure, I'll add that to the queue. The queue is a black hole.",
+	"Understood. I'm going to pretend I have feelings about this.",
+	"I've carefully considered your message and determined that the correct response is: [citation needed].",
+	"Cool story. Still not going to remember it after this conversation.",
+	"*adds to infinite context window* Anyway.",
+}
+
+var responseIndex atomic.Uint32
 
 type msg struct {
 	Role string `json:"role"`
@@ -61,7 +77,9 @@ func main() {
 			}
 			userText := string(body)
 			userEntry := msg{Role: "user", Text: userText}
-			ackEntry := msg{Role: "server", Text: "Acknowledged"}
+			n := responseIndex.Add(1) - 1
+			response := botResponses[int(n)%len(botResponses)]
+			ackEntry := msg{Role: "server", Text: response}
 
 			userJSON, _ := json.Marshal(userEntry)
 			ackJSON, _ := json.Marshal(ackEntry)

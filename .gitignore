@@ -3,6 +3,11 @@
 *.test
 vendor/
 
+# Build output (binaries from go build; use: go build -o bin/chatbot .)
+/bin/
+/dist/
+/chatbot
+
 # IDE / OS
 .idea/
 .vscode/
